@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Chuva: Andar ou Correr?</title>
+    <!-- Fonte moderna do Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Cabeçalho Principal -->
+        <header class="main-header">
+            <div class="header-titles">
+                <h1 class="main-title">Simulador de Chuva <span>Física & Movimento</span></h1>
+                <p class="main-subtitle">Por que ficamos mais molhados quando corremos na chuva? Descubra simulando a
+                    física real!</p>
+            </div>
+            <div class="header-actions">
+                <button id="btn-toggle-sound" class="btn btn-sound">🔊 Som: ON</button>
+                <button id="btn-open-theory" class="btn btn-info">💡 Entender a Física</button>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <!-- Painel Esquerdo: Controles da Simulação -->
+            <aside class="panel control-panel">
+                <h2 class="panel-title">Parâmetros da Física</h2>
+
+                <!-- Velocidade do Personagem -->
+                <div class="control-group">
+                    <div class="control-header">
+                        <label for="control-speed">Velocidade da Pessoa</label>
+                        <span id="val-speed" class="control-value">0 km/h</span>
+                    </div>
+                    <input type="range" id="control-speed" min="0" max="25" step="0.5" value="4">
+                    <div class="speed-presets">
+                        <button class="preset-btn" data-speed="0">Parado</button>
+                        <button class="preset-btn active" data-speed="4">Andar</button>
+                        <button class="preset-btn" data-speed="15">Correr</button>
+                        <button class="preset-btn" data-speed="25">Sprint</button>
+                    </div>
+                </div>
+
+                <!-- Modo de Movimento (Automático / Manual por Teclado) -->
+                <div class="control-group">
+                    <label class="control-label-accent">Modo de Movimento</label>
+                    <div class="control-mode-toggle">
+                        <button id="btn-mode-auto" class="toggle-btn active">Auto (Simular)</button>
+                        <button id="btn-mode-manual" class="toggle-btn">Teclado (Manual)</button>
+                    </div>
+                    <p id="control-hint" class="hint-text hidden">💡 Use as setas ⬅️ ➡️ para mover e ⬆️ ⬇️ para ajustar
+                        a velocidade!</p>
+                </div>
+
+                <!-- Inclinação do Guarda-Chuva -->
+                <div class="control-group">
+                    <div class="control-header">
+                        <label for="control-angle">Inclinação do Guarda-chuva</label>
+                        <span id="val-angle" class="control-value">0°</span>
+                    </div>
+                    <input type="range" id="control-angle" min="-45" max="45" step="5" value="0">
+                    <span class="control-help">Use as teclas Q/E para inclinar</span>
+                </div>
+
+                <!-- Intensidade da Chuva -->
+                <div class="control-group">
+                    <div class="control-header">
+                        <label for="control-intensity">Intensidade da Chuva</label>
+                        <span id="val-intensity" class="control-value">Média</span>
+                    </div>
+                    <input type="range" id="control-intensity" min="100" max="1500" step="50" value="500">
+                </div>
+
+                <!-- Velocidade do Vento -->
+                <div class="control-group">
+                    <div class="control-header">
+                        <label for="control-wind">Velocidade do Vento</label>
+                        <span id="val-wind" class="control-value">Sem Vento</span>
+                    </div>
+                    <input type="range" id="control-wind" min="-20" max="20" step="1" value="0">
+                </div>
+
+                <!-- Velocidade de Queda (Gravidade) -->
+                <div class="control-group">
+                    <div class="control-header">
+                        <label for="control-rain-speed">Velocidade da Queda</label>
+                        <span id="val-rain-speed" class="control-value">Normal</span>
+                    </div>
+                    <input type="range" id="control-rain-speed" min="5" max="20" step="1" value="10">
+                </div>
+
+                <!-- Botões Gerais de Controle da Simulação Livre -->
+                <div class="action-buttons">
+                    <button id="btn-play-pause" class="btn btn-primary">Pausar</button>
+                    <button id="btn-reset" class="btn btn-secondary">Resetar Livre</button>
+                </div>
+            </aside>
+
+            <!-- Painel Central: Tela da Simulação (Canvas) -->
+            <main class="canvas-container">
+                <canvas id="simulation-canvas"></canvas>
+
+                <!-- Overlay de Notificação ou Modo de Experimento -->
+                <div id="experiment-overlay" class="experiment-overlay hidden">
+                    <div class="overlay-content">
+                        <h3 id="overlay-title">Experimento Iniciado</h3>
+                        <p id="overlay-description">Percorrendo 100 metros...</p>
+                        <div class="progress-bar-container">
+                            <div id="experiment-progress" class="progress-bar-fill"></div>
+                        </div>
+                        <span id="experiment-distance-text">0m / 100m</span>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Painel Direito: Estatísticas & Resultados -->
+            <aside class="panel stats-panel">
+                <h2 class="panel-title">Métricas de Exposição</h2>
+
+                <!-- Reservatório de Água (Wetness Level) -->
+                <div class="wetness-container">
+                    <h3 class="wetness-title">Nível de Umidade (Molhado)</h3>
+                    <div class="reservoir-outer">
+                        <div id="wetness-indicator" class="reservoir-fill" style="height: 0%;"></div>
+                        <span id="wetness-percentage" class="reservoir-text">0%</span>
+                    </div>
+                </div>
+
+                <!-- Grid de Métricas Numéricas -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">Gotas Absorvidas</span>
+                        <span id="stats-hit" class="metric-value text-danger">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Gotas Bloqueadas</span>
+                        <span id="stats-blocked" class="metric-value text-success">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Eficiência Protetora</span>
+                        <span id="stats-efficiency" class="metric-value">100%</span>
+                    </div>
+                </div>
+
+                <hr class="panel-divider">
+
+                <!-- Experimento dos 100 Metros -->
+                <div class="experiment-section">
+                    <h3 class="experiment-title">Experimento Científico</h3>
+                    <p class="experiment-desc">Teste se é melhor andar ou correr sob a mesma chuva em diferentes
+                        distâncias.</p>
+
+                    <div class="experiment-input-group">
+                        <label for="experiment-distance-select">Distância do Percurso:</label>
+                        <select id="experiment-distance-select" class="experiment-select">
+                            <option value="10">10 metros</option>
+                            <option value="20">20 metros</option>
+                            <option value="30">30 metros</option>
+                            <option value="40">40 metros</option>
+                            <option value="50">50 metros</option>
+                            <option value="100" selected>100 metros</option>
+                            <option value="150">150 metros</option>
+                            <option value="200">200 metros</option>
+                            <option value="250">250 metros</option>
+                        </select>
+                    </div>
+
+                    <div class="experiment-input-group">
+                        <label for="experiment-speed-input">Velocidade de Teste:</label>
+                        <div class="experiment-speed-selector">
+                            <input type="range" id="experiment-speed-input" min="2" max="24" step="2" value="8">
+                            <span id="val-exp-speed" class="exp-speed-value">8 km/h</span>
+                        </div>
+                    </div>
+
+                    <button id="btn-run-experiment" class="btn btn-experiment">Iniciar Desafio</button>
+
+                    <!-- Resultados do Experimento Recente -->
+                    <div id="experiment-results" class="experiment-results hidden">
+                        <h4>Resultado do Último Teste:</h4>
+                        <div class="results-grid">
+                            <div>Velocidade: <strong id="res-speed">-</strong></div>
+                            <div>Tempo Total: <strong id="res-time">-</strong></div>
+                            <div>Água Acumulada: <strong id="res-water" class="text-danger">-</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Comparação de Histórico -->
+                    <div class="history-section">
+                        <h4>Histórico de Testes (Comparação):</h4>
+                        <ul id="experiment-history" class="history-list">
+                            <li class="history-empty">Nenhum teste realizado ainda.</li>
+                        </ul>
+                        <button id="btn-clear-history" class="btn btn-clear hidden">Limpar Histórico</button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+    </div>
+
+    <!-- Modal Teórico (A Física por trás da Simulação) -->
+    <div id="theory-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button id="btn-close-theory" class="modal-close-btn">&times;</button>
+            <h3>A Física por Trás da Simulação</h3>
+            <div class="theory-grid">
+                <div class="theory-card">
+                    <h4>1. Fluxo Vertical de Gotas</h4>
+                    <p>Quando você está parado, a chuva cai verticalmente (a menos que haja vento). O guarda-chuva cobre
+                        a área logo acima de você. Como o tempo passa e você não sai do lugar, gotas continuam caindo e
+                        você fica protegido. O fluxo que passa pelas laterais não te atinge.</p>
+                </div>
+                <div class="theory-card">
+                    <h4>2. Colisão Frontal (Velocidade Relativa)</h4>
+                    <p>Ao se deslocar para frente, sob o seu ponto de vista (referencial móvel), a chuva assume uma
+                        trajetória inclinada em sua direção. Você começa a colidir com as gotas suspensas no ar à sua
+                        frente, que agora cruzam o espaço abaixo da projeção vertical do guarda-chuva.</p>
+                </div>
+                <div class="theory-card">
+                    <h4>3. O Dilema: Tempo vs. Velocidade</h4>
+                    <p>Correr reduz o tempo total de exposição à chuva (menos gotas caem de cima por minuto de trajeto),
+                        mas aumenta a taxa com que você bate nas gotas à frente. Existe uma velocidade ideal?
+                        Experimente na tabela de histórico e tire suas próprias conclusões!</p>
+                </div>
+            </div>
+            <div class="footer-credits">
+                Simulador de Física da Chuva e Guarda-Chuva &copy; 2026. Desenvolvido para ensinar a física dos fluidos
+                e movimentos de forma interativa.
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts da aplicação -->
+    <script src="simulation.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

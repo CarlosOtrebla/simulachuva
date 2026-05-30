@@ -1,0 +1,21 @@
+{
+  "name": "simulachuva",
+  "version": "1.0.0",
+  "description": "Simulação física interativa de chuva e guarda-chuva",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0"
+  },
+  "keywords": [
+    "physics",
+    "simulation",
+    "canvas",
+    "rain",
+    "umbrella"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}
