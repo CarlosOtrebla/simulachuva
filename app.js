@@ -13,10 +13,10 @@ class RainAudioEngine {
 
     init() {
         if (this.ctx) return;
-        
+
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AudioContextClass();
-        
+
         // Criar buffer de ruído branco
         const bufferSize = 2 * this.ctx.sampleRate;
         const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -24,24 +24,24 @@ class RainAudioEngine {
         for (let i = 0; i < bufferSize; i++) {
             output[i] = Math.random() * 2 - 1;
         }
-        
+
         this.noiseNode = this.ctx.createBufferSource();
         this.noiseNode.buffer = noiseBuffer;
         this.noiseNode.loop = true;
-        
+
         this.filterNode = this.ctx.createBiquadFilter();
         this.filterNode.type = 'lowpass';
-        
+
         this.gainNode = this.ctx.createGain();
-        
+
         this.noiseNode.connect(this.filterNode);
         this.filterNode.connect(this.gainNode);
         this.gainNode.connect(this.ctx.destination);
-        
+
         this.updateParams();
-        
+
         this.noiseNode.start(0);
-        
+
         if (this.isMuted) {
             this.gainNode.gain.setValueAtTime(0, this.ctx.currentTime);
         }
@@ -50,7 +50,7 @@ class RainAudioEngine {
     updateParams(intensity = this.intensity, isRunning = true) {
         this.intensity = intensity;
         if (!this.ctx) return;
-        
+
         if (this.ctx.state === 'suspended') {
             this.ctx.resume();
         }
@@ -64,7 +64,7 @@ class RainAudioEngine {
         const targetGain = 0.01 + (this.intensity - 100) / 1400 * 0.08;
         this.gainNode.gain.setTargetAtTime(targetGain, this.ctx.currentTime, 0.2);
 
-        // Mapeia intensidade para a frequência de corte (350Hz a 1000Hz)
+        // Mapeia intensidade para a frequência de corte (350Hz a 1000Hz) 
         const targetFreq = 350 + (this.intensity - 100) / 1400 * 650;
         this.filterNode.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.2);
     }
@@ -91,6 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const controlWind = document.getElementById('control-wind');
     const controlRainSpeed = document.getElementById('control-rain-speed');
     const expSpeedInput = document.getElementById('experiment-speed-input');
+    const controlHeight = document.getElementById('control-height');
+    const valHeight = document.getElementById('val-height');
+
 
     // Elementos de Exibição dos Valores
     const valSpeed = document.getElementById('val-speed');
@@ -106,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnRunExperiment = document.getElementById('btn-run-experiment');
     const btnClearHistory = document.getElementById('btn-clear-history');
     const btnToggleSound = document.getElementById('btn-toggle-sound');
-    
+
     // Controles de Modo de Movimento
     const btnModeAuto = document.getElementById('btn-mode-auto');
     const btnModeManual = document.getElementById('btn-mode-manual');
@@ -149,16 +152,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let isTerminated = false; // Rastreia se a simulação foi terminada/concluída prematuramente
     let movementMode = 'auto'; // 'auto' ou 'manual'
     const keysPressed = {};
-    
+
     // Instancia o motor de áudio
     const audioEngine = new RainAudioEngine();
-    
+
     // Configurações Físicas Gerais
     const gravity = 9.8;
     let rainIntensity = parseInt(controlIntensity.value); // Gotas geradas por segundo
     let windSpeed = parseFloat(controlWind.value);        // Velocidade natural do vento (X)
     let rainFallSpeed = parseFloat(controlRainSpeed.value); // Velocidade de queda base da chuva (Y)
-    
+
     // Estado de Movimento da Pessoa (Velocidade Livre)
     let targetSpeedKmh = parseFloat(controlSpeed.value);
     let currentSpeedKmh = targetSpeedKmh;
@@ -177,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let roadOffset = 0;
 
     // Inicializa a Pessoa e o Guarda-Chuva com fator global de escala proporcional (1.5x)
-    const SIMULATION_SCALE = 1.5;
+    let SIMULATION_SCALE = parseFloat(controlHeight.value);
     const person = new Person(0, 0, SIMULATION_SCALE);
     const umbrella = new Umbrella(55, 75, SIMULATION_SCALE);
 
@@ -208,10 +211,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const rect = canvas.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = rect.height;
-        
+
         // Define a linha de terra em relação à altura do canvas
         groundY = canvas.height - 50;
-        
+
         // Posiciona a pessoa no centro horizontalmente
         person.x = canvas.width / 2;
         person.y = groundY;
@@ -225,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateControlLabels() {
         valSpeed.textContent = `${currentSpeedKmh.toFixed(1)} km/h`;
         valAngle.textContent = `${umbrellaTargetAngle}°`;
-        
+
         // Intensidade
         if (rainIntensity < 300) valIntensity.textContent = 'Garoa';
         else if (rainIntensity < 800) valIntensity.textContent = 'Média';
@@ -241,8 +244,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rainFallSpeed < 8) valRainSpeed.textContent = 'Lenta (Névoa)';
         else if (rainFallSpeed < 13) valRainSpeed.textContent = 'Normal';
         else valRainSpeed.textContent = 'Rápida (Tempestade)';
-        
+
         valExpSpeed.textContent = `${expSpeedInput.value} km/h`;
+
+        // Altura do personagem
+        const heightVal = SIMULATION_SCALE;
+        if (heightVal < 1.2) {
+            valHeight.textContent = `Baixa (${heightVal.toFixed(1)}x)`;
+        } else if (heightVal > 1.8) {
+            valHeight.textContent = `Alta (${heightVal.toFixed(1)}x)`;
+        } else {
+            valHeight.textContent = `Normal (${heightVal.toFixed(1)}x)`;
+        }
     }
 
     // ----------------------------------------------------------------------
@@ -279,6 +292,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     expSpeedInput.addEventListener('input', (e) => {
         valExpSpeed.textContent = `${e.target.value} km/h`;
+    });
+
+    controlHeight.addEventListener('input', (e) => {
+        SIMULATION_SCALE = parseFloat(e.target.value);
+        person.updateScale(SIMULATION_SCALE);
+        umbrella.updateScale(SIMULATION_SCALE);
+        updateControlLabels();
     });
 
     // Preset buttons
@@ -329,9 +349,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('keydown', (e) => {
         // Registra o estado da tecla pressionada
         keysPressed[e.key] = true;
-        
+
         let changed = false;
-        
+
         // Rotação do guarda-chuva apenas com Q/E (q/e) para evitar conflitos de locomoção
         if (e.key === 'q' || e.key === 'Q') {
             umbrellaTargetAngle = Math.max(-45, umbrellaTargetAngle - 5);
@@ -444,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnPlayPause.textContent = isRunning ? 'Pausar' : 'Iniciar';
         btnPlayPause.classList.toggle('btn-primary', isRunning);
         btnPlayPause.classList.toggle('btn-secondary', !isRunning);
-        
+
         updateAudio();
         if (isRunning) {
             lastTime = performance.now();
@@ -466,9 +486,9 @@ document.addEventListener('DOMContentLoaded', () => {
         splashes = [];
         person.x = canvas.width / 2; // Centraliza o boneco no modo livre
         isTerminated = false;
-        
+
         experimentResults.classList.add('hidden');
-        
+
         updateControlLabels();
         highlightClosestPreset(targetSpeedKmh);
         updateDashboard();
@@ -486,17 +506,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateDashboard() {
         statsHit.textContent = Math.round(totalHit);
         statsBlocked.textContent = Math.round(totalBlocked);
-        
+
         // Calcula eficiência do guarda-chuva
         const total = totalHit + totalBlocked;
         const efficiency = total === 0 ? 100 : (totalBlocked / total) * 100;
         statsEfficiency.textContent = `${efficiency.toFixed(0)}%`;
-        
+
         // Atualiza o preenchimento do reservatório com a água acumulada (máximo de 100)
         const displayWetness = Math.min(100, person.wetness);
         wetnessIndicator.style.height = `${displayWetness}%`;
         wetnessPercentage.textContent = `${displayWetness.toFixed(0)}%`;
-        
+
         // Altera a cor do indicador visual dependendo de quão molhada a pessoa está
         if (displayWetness > 70) {
             wetnessIndicator.style.background = 'linear-gradient(180deg, #f43f5e 0%, #ef4444 100%)'; // Vermelho
@@ -510,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------------------------
     // Lógica Física de Partículas e Colisões
     // ----------------------------------------------------------------------
-    
+
     /**
      * Gera novas gotas de chuva com base na intensidade, calculando a largura
      * de nascimento dinamicamente para evitar vazios em alta velocidade ou vento.
@@ -520,21 +540,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const count = (rainIntensity * dt) / 1000;
         const integerCount = Math.floor(count);
         const remainder = count - integerCount;
-        
+
         // Garante geração contínua baseada em frações
         let toSpawn = integerCount;
         if (Math.random() < remainder) toSpawn += 1;
-        
+
         // A velocidade horizontal da chuva depende unicamente do vento
         const expectedVx = windSpeed;
-        
+
         // Tempo máximo estimado de queda vertical
         const vyMin = rainFallSpeed * 0.7;
         const maxFlightTime = (canvas.height + 50) / vyMin;
-        
+
         // Deslocamento horizontal máximo gerado pelo vento
         const maxDx = expectedVx * maxFlightTime;
-        
+
         // Define a faixa horizontal de nascimento dinamicamente
         let minX, maxX;
         if (expectedVx < 0) {
@@ -546,17 +566,17 @@ document.addEventListener('DOMContentLoaded', () => {
             minX = -maxDx - 100;
             maxX = canvas.width + 100;
         }
-        
+
         for (let i = 0; i < toSpawn; i++) {
             const x = Math.random() * (maxX - minX) + minX;
             const y = -30;
-            
+
             // Velocidade física de queda Y
             const vy = (rainFallSpeed * 0.7) + Math.random() * (rainFallSpeed * 0.6);
-            
+
             // Velocidade horizontal inicial
             const vx = windSpeed;
-            
+
             particles.push(new RainParticle(x, y, vx, vy));
         }
     }
@@ -567,7 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updatePhysics(dt) {
         // Suaviza a velocidade da pessoa em direção à desejada (efeito de aceleração)
         currentSpeedKmh += (targetSpeedKmh - currentSpeedKmh) * 0.08;
-        
+
         let moveDir = 0;
         let activeSpeedKmh = currentSpeedKmh;
 
@@ -576,7 +596,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Modo Manual: Movimenta apenas se a respectiva tecla de direção estiver pressionada
                 const goLeft = keysPressed['ArrowLeft'] || keysPressed['a'] || keysPressed['A'];
                 const goRight = keysPressed['ArrowRight'] || keysPressed['d'] || keysPressed['D'];
-                
+
                 if (goLeft && !goRight) {
                     moveDir = -1;
                 } else if (goRight && !goLeft) {
@@ -594,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const personSpeedPhysical = (activeSpeedKmh * 0.277) * 4.5 * moveDir;
                 person.x += personSpeedPhysical * dt;
             }
-            
+
             // Loop de tela do personagem (wrap-around)
             const margin = 100;
             if (person.x > canvas.width + margin) {
@@ -609,10 +629,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Atualiza animação das pernas e direção de visão
         person.update(dt, activeSpeedKmh, moveDir);
-        
+
         // Atualiza a posição do guarda-chuva com a nova posição, ângulo e direção
         umbrella.update(person.x, person.y, umbrellaTargetAngle, person.facingDirection);
-        
+
         // Limite horizontal dinâmico para limpeza de partículas (depende apenas do vento)
         const expectedVx = windSpeed;
         const vyMin = rainFallSpeed * 0.7;
@@ -631,7 +651,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Atualizar Gotas de Chuva
         for (let i = particles.length - 1; i >= 0; i--) {
             const p = particles[i];
-            
+
             // Atualiza posição da gota de chuva com vento e gravidade
             p.update(dt, windSpeed, gravity);
 
@@ -642,7 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Verifica colisão com Guarda-chuva (arestas superiores e base do triângulo)
             const uV = umbrellaVertices;
-            const collidedWithUmbrella = 
+            const collidedWithUmbrella =
                 checkLineIntersection(pA, pB, uV[1], uV[0]) || // Aresta esquerda para ápice
                 checkLineIntersection(pA, pB, uV[2], uV[0]) || // Aresta direita para ápice
                 checkLineIntersection(pA, pB, uV[1], uV[2]) || // Aresta base
@@ -667,15 +687,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Verifica colisão com Cabeça (Círculo) - testando início, meio e fim do trajeto
-            const collidedWithHead = 
+            const collidedWithHead =
                 checkCollisionPointCircle(pA.x, pA.y, headGeo) ||
                 checkCollisionPointCircle(pMid.x, pMid.y, headGeo) ||
                 checkCollisionPointCircle(pB.x, pB.y, headGeo);
 
             if (collidedWithHead) {
                 totalHit++;
-                person.wetnessHead += 0.25; 
-                
+                person.wetnessHead += 0.25;
+
                 // Splashes menores no choque com a cabeça
                 const splashCount = 2 + Math.floor(Math.random() * 2);
                 for (let k = 0; k < splashCount; k++) {
@@ -688,14 +708,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Verifica colisão com Corpo (Retângulo) - testando início, meio e fim do trajeto
-            const collidedWithBody = 
+            const collidedWithBody =
                 checkCollisionPointRect(pA.x, pA.y, bodyGeo) ||
                 checkCollisionPointRect(pMid.x, pMid.y, bodyGeo) ||
                 checkCollisionPointRect(pB.x, pB.y, bodyGeo);
 
             if (collidedWithBody) {
                 totalHit++;
-                
+
                 // Divisão Y para separar Tronco e Pernas
                 const divisionY = person.y - 30 * person.scale;
                 if (p.y < divisionY) {
@@ -764,7 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const h = heights[i % heights.length];
             const bx = i * bWidth;
             ctx.fillRect(bx + 5, groundY - h, bWidth - 10, h);
-            
+
             ctx.fillStyle = i % 2 === 0 ? 'rgba(0, 240, 255, 0.04)' : 'rgba(124, 58, 237, 0.04)';
             for (let wy = groundY - h + 20; wy < groundY - 20; wy += 35) {
                 for (let wx = bx + 15; wx < bx + bWidth - 20; wx += 25) {
@@ -812,7 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const fraction = i * 0.25;
                 const x = startX + fraction * (endX - startX);
                 const distVirtual = fraction * targetDistance;
-                
+
                 ctx.beginPath();
                 ctx.moveTo(x, groundY);
                 ctx.lineTo(x, groundY + 8);
@@ -826,7 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.beginPath();
             const dashWidth = 40;
             const gapWidth = 40;
-            
+
             let drawX = 0;
             while (drawX < canvas.width + 80) {
                 ctx.moveTo(drawX, groundY + 12);
@@ -863,7 +883,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Limita o dt para evitar grandes saltos de física em travamentos de abas
         if (elapsed > 100) elapsed = 100;
-        
+
         // Fator de escala temporal para cálculo físico consistente
         const dt = elapsed / 16.666; // 1.0 equivale a 60 FPS normais
 
@@ -873,7 +893,7 @@ document.addEventListener('DOMContentLoaded', () => {
             drawSimulation();
         } else if (mode === 'experiment') {
             const baseSpeed = parseFloat(expSpeedInput.value);
-            
+
             // Executa spawn e física em tempo real (1x)
             spawnRain(elapsed);
             updatePhysics(dt);
@@ -898,7 +918,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const progressPercent = (experimentDistance / targetDistance) * 100;
             experimentProgress.style.width = `${progressPercent}%`;
             experimentDistanceText.textContent = `${Math.round(experimentDistance)}m / ${targetDistance}m`;
-            
+
             drawSimulation();
         }
 
@@ -914,7 +934,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Salva estados da simulação livre para restaurar depois
         savedFreeSpeedKmh = targetSpeedKmh;
-        
+
         // Bloqueia sliders no modo experimento
         mode = 'experiment';
         controlSpeed.disabled = true;
@@ -968,14 +988,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function cancelExperiment() {
         if (mode !== 'experiment') return;
-        
+
         mode = 'free';
-        
+
         // Restaura controles e velocidade
         controlSpeed.disabled = false;
         presetButtons.forEach(btn => btn.style.pointerEvents = 'auto');
         expDistanceSelect.disabled = false;
-        
+
         targetSpeedKmh = savedFreeSpeedKmh;
         currentSpeedKmh = savedFreeSpeedKmh;
 
@@ -1006,12 +1026,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function finishExperiment() {
         mode = 'free';
-        
+
         // Restaura controles e velocidade
         controlSpeed.disabled = false;
         presetButtons.forEach(btn => btn.style.pointerEvents = 'auto');
         expDistanceSelect.disabled = false;
-        
+
         targetSpeedKmh = savedFreeSpeedKmh;
         currentSpeedKmh = savedFreeSpeedKmh;
 
@@ -1033,7 +1053,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Salva no histórico
         saveToHistory(speed, experimentTime, finalWet, targetDistance);
-        
+
         updateControlLabels();
         highlightClosestPreset(targetSpeedKmh);
         updateAudio();
@@ -1062,10 +1082,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Carrega histórico atual
         let history = JSON.parse(localStorage.getItem('rain_sim_history')) || [];
         history.push(testResult);
-        
+
         // Limita a 10 resultados para não poluir a tela
         if (history.length > 10) history.shift();
-        
+
         localStorage.setItem('rain_sim_history', JSON.stringify(history));
         renderHistory();
     }
@@ -1088,7 +1108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         history.forEach((item, index) => {
             const li = document.createElement('li');
             li.className = 'history-item';
-            
+
             // Define o rótulo do resultado (Melhor opção ganha destaque)
             const badgeText = index === 0 ? '🏆 Melhor' : `#${index + 1}`;
             const wetnessClass = item.wetness < 35 ? 'low' : '';
@@ -1132,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inicialização da interface e carregamento do histórico
     updateControlLabels();
     renderHistory();
-    
+
     // Inicia o Loop Principal
     requestAnimationFrame(simulationLoop);
 });

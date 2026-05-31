@@ -144,6 +144,15 @@ class Umbrella {
     }
 
     /**
+     * Atualiza a escala do guarda-chuva e recalcula suas dimensões.
+     */
+    updateScale(newScale) {
+        this.scale = newScale;
+        this.radius = 55 * this.scale;
+        this.stickLength = 75 * this.scale;
+    }
+
+    /**
      * Atualiza as coordenadas do guarda-chuva com base na posição da pessoa, ângulo e direção de visão.
      */
     update(personX, personY, targetAngleDegrees, facingDirection = 1) {
@@ -270,6 +279,16 @@ class Person {
         
         // Parâmetros de animação para as pernas
         this.walkCycle = 0;
+    }
+
+    /**
+     * Atualiza a escala do personagem e recalcula suas dimensões.
+     */
+    updateScale(newScale) {
+        this.scale = newScale;
+        this.headRadius = 15 * this.scale;
+        this.bodyWidth = 20 * this.scale;
+        this.bodyHeight = 75 * this.scale;
     }
 
     /**
