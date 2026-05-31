@@ -212,22 +212,20 @@
             <h3>A Física por Trás da Simulação</h3>
             <div class="theory-grid">
                 <div class="theory-card">
-                    <h4>1. Fluxo Vertical de Gotas</h4>
-                    <p>Quando você está parado, a chuva cai verticalmente (a menos que haja vento). O guarda-chuva cobre
-                        a área logo acima de você. Como o tempo passa e você não sai do lugar, gotas continuam caindo e
-                        você fica protegido. O fluxo que passa pelas laterais não te atinge.</p>
+                    <h4>1. 🌧️ Cinemática da Chuva & Vento</h4>
+                    <p>As gotas caem sob a ação da gravidade acelerada até atingirem uma velocidade terminal (máximo de 25 px/s). A velocidade horizontal das gotas é determinada exclusivamente pela intensidade e direção do vento (Leste/Oeste), alterando o ângulo real de queda e exigindo compensação espacial.</p>
                 </div>
                 <div class="theory-card">
-                    <h4>2. Colisão Frontal (Velocidade Relativa)</h4>
-                    <p>Ao se deslocar para frente, sob o seu ponto de vista (referencial móvel), a chuva assume uma
-                        trajetória inclinada em sua direção. Você começa a colidir com as gotas suspensas no ar à sua
-                        frente, que agora cruzam o espaço abaixo da projeção vertical do guarda-chuva.</p>
+                    <h4>2. ☂️ Guarda-Chuva & Colisão Contínua</h4>
+                    <p>O guarda-chuva funciona como um escudo físico triangular orientável (ângulo de -45° a 45° ajustável via Q/E ou painel). A detecção calcula a interseção contínua de segmentos de reta para evitar que as gotas passem pela barreira em alta velocidade, ejetando respingos (splashes) realistas no impacto.</p>
                 </div>
                 <div class="theory-card">
-                    <h4>3. O Dilema: Tempo vs. Velocidade</h4>
-                    <p>Correr reduz o tempo total de exposição à chuva (menos gotas caem de cima por minuto de trajeto),
-                        mas aumenta a taxa com que você bate nas gotas à frente. Existe uma velocidade ideal?
-                        Experimente na tabela de histórico e tire suas próprias conclusões!</p>
+                    <h4>3. 🌡️ Distribuição de Umidade & Heatmap</h4>
+                    <p>O personagem é dividido em três áreas físicas independentes: Cabeça, Tronco e Pernas. Cada gota que passa pela cobertura do guarda-chuva aumenta a umidade da região afetada. O nível total é uma média ponderada (40% Cabeça, 40% Tronco e 20% Pernas) e reflete-se visualmente no mapa de calor dinâmico.</p>
+                </div>
+                <div class="theory-card">
+                    <h4>4. 📊 O Dilema: Tempo vs. Varredura</h4>
+                    <p>Ao correr, você reduz o tempo de exposição direta da chuva sobre você (menos gotas vindas de cima por minuto), porém aumenta a taxa de varredura frontal (colidindo mais rápido com as gotas suspensas no ar). Use o painel de experimento para simular percursos fechados e confira a velocidade ideal no ranking do histórico.</p>
                 </div>
             </div>
             <div class="footer-credits">
